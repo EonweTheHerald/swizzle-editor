@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { EditorState, EditorConfig, AssetState, TextureAsset, SequenceAsset, LayoutState, HistoryEntry } from './types';
 import type { BehaviorConfig, EmitterConfig } from '@eonwetheherald/swizzle';
+import { recentreEmittersOnResize } from '@/utils/configTransform';
 
 const MAX_HISTORY = 100;
 const MIN_TIME_SCALE = 0.1;
@@ -567,9 +568,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   setCanvasDimensions: (canvasWidth: number, canvasHeight: number) => {
-    set((state) => ({
-      ui: { ...state.ui, canvasWidth, canvasHeight },
-    }));
+    set((state) => {
+      const oldW = state.ui.canvasWidth;
+      const oldH = state.ui.canvasHeight;
+      const emitters = recentreEmittersOnResize(
+        state.config.emitters,
+        oldW,
+        oldH,
+        canvasWidth,
+        canvasHeight,
+      );
+      return {
+        config: emitters !== state.config.emitters
+          ? { ...state.config, emitters }
+          : state.config,
+        ui: { ...state.ui, canvasWidth, canvasHeight },
+      };
+    });
   },
 
   setTimeScale: (timeScale: number) => {
@@ -643,11 +658,26 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   // Import/Export
   loadConfig: (config: EditorConfig, assets: AssetState) => {
+    const { canvasWidth, canvasHeight } = get().ui;
+    const defaults = createDefaultUIState();
+
+    // Recentre emitters from the 800×600 authoring canvas to the actual
+    // canvas size so loaded examples / imports appear centred immediately.
+    const emitters = recentreEmittersOnResize(
+      config.emitters,
+      defaults.canvasWidth,
+      defaults.canvasHeight,
+      canvasWidth,
+      canvasHeight,
+    );
+
     set({
-      config,
+      config: { ...config, emitters },
       assets,
       ui: {
-        ...createDefaultUIState(),
+        ...defaults,
+        canvasWidth,
+        canvasHeight,
         selectedEmitterIndex: config.emitters.length > 0 ? 0 : null,
       },
     });

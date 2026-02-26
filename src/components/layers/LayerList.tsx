@@ -100,7 +100,7 @@ export function LayerList() {
       name: `${type.charAt(0).toUpperCase() + type.slice(1)} Emitter`,
       position: { x: cx, y: cy },
       ...(type !== 'burst' && type !== 'triggered' && { emissionRate: 50 }),
-      particle: getDefaultParticleConfig(),
+      particle: getDefaultParticleConfig(type),
       velocity: getDefaultVelocityConfig(type),
     };
 

@@ -148,15 +148,113 @@ export function validateEditorConfig(config: EditorConfig): {
   };
 }
 
+// ─── Canvas-resize centering ────────────────────────────────────────────────
+
+interface Vec2 {
+  x: number;
+  y: number;
+}
+
 /**
- * Get default particle config for an emitter type
+ * Emitter types whose path / waypoint coordinates are stored as absolute
+ * canvas positions and must therefore be shifted on resize.
  */
-export function getDefaultParticleConfig() {
+const ABSOLUTE_COORD_TYPES: Record<string, string[]> = {
+  line: ['start', 'end'],
+  path: ['path', 'points'],
+};
+
+function shiftPoint(p: Vec2, dx: number, dy: number): Vec2 {
+  return { x: p.x + dx, y: p.y + dy };
+}
+
+/**
+ * Shift every emitter's position (and any absolute-coordinate fields) so
+ * particles stay centred when the canvas is resized.
+ *
+ * Pure function — returns a new array; the originals are never mutated.
+ *
+ * Fields handled:
+ *   • `position`  — all emitter types
+ *   • `start/end` — line emitter (absolute segment endpoints)
+ *   • `path/points` — path emitter (absolute waypoints)
+ *
+ * Fields intentionally NOT shifted:
+ *   • `vertices`  — polygon emitter (relative to `position`)
+ *   • `width/height` — area emitter (dimensions, not positions)
+ *   • `radius`     — circle emitter
+ */
+export function recentreEmittersOnResize(
+  emitters: EmitterConfig[],
+  oldWidth: number,
+  oldHeight: number,
+  newWidth: number,
+  newHeight: number,
+): EmitterConfig[] {
+  const dx = newWidth / 2 - oldWidth / 2;
+  const dy = newHeight / 2 - oldHeight / 2;
+
+  if (dx === 0 && dy === 0) return emitters;
+  if (emitters.length === 0) return emitters;
+
+  return emitters.map((emitter) => {
+    const updated: Record<string, unknown> = { ...emitter };
+
+    // Shift primary position
+    updated.position = shiftPoint(emitter.position, dx, dy);
+
+    // Shift type-specific absolute coordinate fields
+    const fields = ABSOLUTE_COORD_TYPES[emitter.type];
+    if (fields) {
+      for (const field of fields) {
+        const value = (emitter as Record<string, unknown>)[field];
+        if (Array.isArray(value)) {
+          // path / points — array of Vec2
+          updated[field] = value.map((p: Vec2) => shiftPoint(p, dx, dy));
+        } else if (value && typeof value === 'object' && 'x' in value && 'y' in value) {
+          // start / end — single Vec2
+          updated[field] = shiftPoint(value as Vec2, dx, dy);
+        }
+      }
+    }
+
+    return updated as EmitterConfig;
+  });
+}
+
+/**
+ * Emitter types that naturally produce moving particles and should
+ * include a velocity behavior out of the box.
+ */
+const VELOCITY_EMITTER_TYPES = new Set([
+  'point',
+  'circle',
+  'area',
+  'line',
+  'polygon',
+  'path',
+  'burst',
+  'timed',
+]);
+
+/**
+ * Get default particle config for an emitter type.
+ *
+ * Emitters whose particles are expected to move (point, circle, area, line,
+ * polygon, path, burst, timed) automatically receive a `velocity` behavior so
+ * the velocity config on the emitter actually takes effect.
+ */
+export function getDefaultParticleConfig(emitterType?: string) {
+  const behaviors: Array<{ type: string; priority?: number }> =
+    emitterType && VELOCITY_EMITTER_TYPES.has(emitterType)
+      ? [{ type: 'velocity', priority: 5 }]
+      : [];
+
   return {
     type: 'sprite' as const,
     texture: 'default',
     lifetime: { min: 1.0, max: 2.0 },
-    behaviors: [],
+    behaviors,
   };
 }
 
