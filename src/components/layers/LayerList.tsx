@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useEditorStore } from '@/store/editorStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Copy, Eye, EyeOff, Edit2, Check, X } from 'lucide-react';
+import { Plus, Trash2, Copy, Eye, EyeOff, Edit2, Check, X, GripVertical } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import type { EmitterConfig } from '@eonwetheherald/swizzle';
@@ -236,7 +236,7 @@ export function LayerList() {
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className={`px-2 py-1.5 border rounded transition-all ${
+                          className={`group px-2 py-1.5 border rounded transition-all ${
                             snapshot.isDragging
                               ? 'border-[var(--accent)] bg-[var(--accent)]/10 shadow-md'
                               : selectedEmitterIndex === index
@@ -249,20 +249,9 @@ export function LayerList() {
                             {/* Drag Handle */}
                             <div
                               {...provided.dragHandleProps}
-                              className="cursor-grab active:cursor-grabbing"
+                              className="cursor-grab active:cursor-grabbing flex-shrink-0"
                             >
-                              <svg
-                                className="h-4 w-4 text-[var(--text-muted)]"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <circle cx="7" cy="5" r="1.5" />
-                                <circle cx="13" cy="5" r="1.5" />
-                                <circle cx="7" cy="10" r="1.5" />
-                                <circle cx="13" cy="10" r="1.5" />
-                                <circle cx="7" cy="15" r="1.5" />
-                                <circle cx="13" cy="15" r="1.5" />
-                              </svg>
+                              <GripVertical className="h-4 w-4 text-[var(--text-dimmed)]" />
                             </div>
 
                             {/* Layer Name */}
@@ -311,7 +300,7 @@ export function LayerList() {
 
                             {/* Actions */}
                             {!isEditing && (
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 {/* Visibility Toggle */}
                                 <Button
                                   size="icon"
@@ -390,15 +379,6 @@ export function LayerList() {
         </DragDropContext>
       )}
 
-      {/* Keyboard Shortcuts Info */}
-      {emitters.length > 0 && (
-        <div className="mt-3 px-2 py-2 border border-[var(--border)] rounded bg-[var(--surface)] text-[var(--text-xs)] text-[var(--text-dimmed)] space-y-0.5">
-          <div className="font-medium text-[var(--text-muted)] mb-1">Shortcuts</div>
-          <div>Del — Delete</div>
-          <div>Ctrl+D — Duplicate</div>
-          <div>Space — Play/Pause</div>
-        </div>
-      )}
     </div>
   );
 }

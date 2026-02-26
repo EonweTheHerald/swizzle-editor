@@ -193,6 +193,7 @@ export function AssetLibrary() {
                   {texture.name}
                 </div>
                 <div className="text-xs text-[var(--text-muted)]">
+                  {texture.width}×{texture.height}
                 </div>
               </div>
               <Button
@@ -229,6 +230,7 @@ export function AssetLibrary() {
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{sequence.name}</div>
                     <div className="text-xs text-[var(--text-muted)]">
+                      {sequence.frames.length} frames
                     </div>
                   </div>
                   <Button

@@ -13,6 +13,10 @@ import { toast } from 'sonner';
 export function Header() {
   const { ui, setPreviewState, setTimeScale, layout, toggleLeftPane, toggleRightPane } = useEditorStore();
   const { previewState, hasUnsavedChanges, timeScale } = ui;
+  const historyIndex = useEditorStore((s) => s.historyIndex);
+  const historyLength = useEditorStore((s) => s.history.length);
+  const canUndo = historyIndex >= 0;
+  const canRedo = historyIndex + 2 < historyLength;
 
   const handleNew = () => {
     if (hasUnsavedChanges) {
@@ -89,7 +93,7 @@ export function Header() {
           <PanelLeftClose size={14} />
         </IconButton>
 
-        <span className="text-[var(--text-muted)] font-semibold text-[var(--text-sm)] tracking-wide ml-1">
+        <span className="text-[var(--text)] font-semibold text-[var(--text-sm)] tracking-wide ml-1">
           Swizzle
         </span>
 
@@ -121,7 +125,7 @@ export function Header() {
           onClick={handleUndo}
           title="Undo (Ctrl+Z)"
           size="sm"
-          disabled={!useEditorStore.getState().canUndo()}
+          disabled={!canUndo}
         >
           <Undo2 size={14} />
         </IconButton>
@@ -129,7 +133,7 @@ export function Header() {
           onClick={handleRedo}
           title="Redo (Ctrl+Shift+Z)"
           size="sm"
-          disabled={!useEditorStore.getState().canRedo()}
+          disabled={!canRedo}
         >
           <Redo2 size={14} />
         </IconButton>
@@ -181,7 +185,7 @@ export function Header() {
           ))}
         </div>
 
-        <span className="ml-2 text-[10px] font-mono text-[var(--text-dimmed)]">
+        <span className="ml-2 text-[10px] font-mono text-[var(--text-dimmed)] inline-block min-w-[48px] text-center">
           {previewState === 'playing' ? 'PLAYING' : previewState === 'paused' ? 'PAUSED' : 'STOPPED'}
         </span>
       </div>

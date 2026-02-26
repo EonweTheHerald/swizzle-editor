@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useEditorStore } from '@/store/editorStore';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronRight } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { BehaviorForm } from './BehaviorForm';
 import { BEHAVIOR_REGISTRY } from '@/types/behaviorTypes';
@@ -106,6 +106,11 @@ export function BehaviorList({ emitterIndex }: BehaviorListProps) {
                     Priority: {(behavior as BehaviorConfig & { priority?: number }).priority ?? 'default'}
                   </div>
                 </div>
+                <ChevronRight
+                  className={`h-3.5 w-3.5 text-[var(--text-dimmed)] flex-shrink-0 transition-transform duration-150 ${
+                    editingIndex === index ? 'rotate-90' : ''
+                  }`}
+                />
                 <Button
                   size="icon"
                   variant="ghost"

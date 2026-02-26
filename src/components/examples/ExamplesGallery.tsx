@@ -250,7 +250,7 @@ function ExampleDetail({ example, onBack }: ExampleDetailProps) {
         className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors self-start"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        <span className="text-[var(--text-xs)] text-[var(--text-dimmed)]">Back to gallery</span>
+        <span>Back to gallery</span>
       </button>
 
       {/* Header */}
