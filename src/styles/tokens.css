@@ -1,0 +1,166 @@
+/*
+ * Design Tokens – Swizzle Particle Editor
+ *
+ * Neutral, professional dark theme following Unity/Blender/Adobe conventions.
+ * All components consume these variables — never hardcode hex values.
+ *
+ * Theme switching: add `class="light"` on <html> for the light-neutral variant.
+ */
+
+/* ─── Dark-Neutral (default) ──────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg:          #1e1e1e;
+  --bg-deep:     #181818;
+  --surface:     #252526;
+  --surface-2:   #2d2d30;
+  --surface-3:   #333337;
+
+  /* Borders */
+  --border:      #3c3c3c;
+  --border-subtle:#2e2e30;
+
+  /* Text */
+  --text:        #cccccc;
+  --text-strong: #e0e0e0;
+  --text-muted:  #858585;
+  --text-dimmed: #5a5a5a;
+
+  /* Interactive surface states */
+  --surface-hover:  #333337;
+  --surface-active: #3b82f618;
+
+  /* Accent – single cool blue for selection & focus */
+  --accent:      #3b82f6;
+  --accent-hover:#2563eb;
+  --accent-muted:#3b82f620;
+  --accent-subtle:#3b82f610;
+
+  /* Focus ring */
+  --focus-ring:  #3b82f6;
+
+  /* Semantic */
+  --destructive:       #ef4444;
+  --destructive-hover: #dc2626;
+  --destructive-muted: #ef444420;
+  --warning:           #f59e0b;
+  --success:           #22c55e;
+  --info:              #3b82f6;
+
+  /* Selection / highlight */
+  --selection:   #264f78;
+
+  /* Radius */
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   12px;
+  --radius-full: 9999px;
+
+  /* Spacing (a 4px scale) */
+  --space-0:  0px;
+  --space-px: 1px;
+  --space-0-5: 2px;
+  --space-1:  4px;
+  --space-1-5: 6px;
+  --space-2:  8px;
+  --space-2-5: 10px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Shadows */
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md:  0 4px 6px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-lg:  0 10px 15px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.2);
+  --shadow-xl:  0 20px 25px rgba(0,0,0,0.45), 0 8px 10px rgba(0,0,0,0.2);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', monospace;
+
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   14px;
+  --text-lg:   16px;
+  --text-xl:   18px;
+
+  --line-tight:  1.2;
+  --line-snug:   1.35;
+  --line-normal: 1.5;
+  --line-relaxed:1.625;
+
+  --weight-normal:  400;
+  --weight-medium:  500;
+  --weight-semibold:600;
+  --weight-bold:    700;
+
+  /* Transitions */
+  --duration-fast:   100ms;
+  --duration-normal: 150ms;
+  --duration-slow:   250ms;
+
+  /* Z-index layers */
+  --z-base:    0;
+  --z-overlay: 10;
+  --z-popover: 20;
+  --z-modal:   30;
+  --z-toast:   40;
+
+  /* Pane dimensions */
+  --pane-left-width:  260px;
+  --pane-right-width: 320px;
+  --pane-min-width:   180px;
+  --header-height:    40px;
+  --statusbar-height: 24px;
+  --toolbar-height:   36px;
+}
+
+/* ─── Light-Neutral ───────────────────────────────────────────────────────── */
+.light {
+  --bg:          #f5f5f5;
+  --bg-deep:     #ebebeb;
+  --surface:     #ffffff;
+  --surface-2:   #fafafa;
+  --surface-3:   #f0f0f0;
+
+  --border:      #d4d4d4;
+  --border-subtle:#e5e5e5;
+
+  --text:        #333333;
+  --text-strong: #1a1a1a;
+  --text-muted:  #737373;
+  --text-dimmed: #a3a3a3;
+
+  --accent:      #2563eb;
+  --accent-hover:#1d4ed8;
+  --accent-muted:#2563eb20;
+  --accent-subtle:#2563eb10;
+
+  --focus-ring:  #2563eb;
+
+  --destructive:       #dc2626;
+  --destructive-hover: #b91c1c;
+  --destructive-muted: #dc262620;
+
+  --surface-hover:  #f0f0f0;
+  --surface-active: #2563eb18;
+  --warning:           #d97706;
+  --success:           #16a34a;
+  --info:              #2563eb;
+
+  --selection:   #cce5ff;
+
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.06);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 6px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:  0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.04);
+  --shadow-xl:  0 20px 25px rgba(0,0,0,0.12), 0 8px 10px rgba(0,0,0,0.04);
+}
