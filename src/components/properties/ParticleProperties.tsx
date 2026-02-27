@@ -107,6 +107,8 @@ export function ParticleProperties({ emitterIndex, particle }: ParticlePropertie
 
   // Ensure animated particles always persist an actual frameSequence value.
   // Without this, the UI can display the first option while config remains undefined.
+  // Deps intentionally exclude `particle` to avoid infinite re-render loops —
+  // the effect only needs to fire when the emitter index, type, or sequence changes.
   useEffect(() => {
     if (!isAnimated) return;
     if ((p.frameSequence as string | undefined) || !firstSequence) return;
@@ -114,7 +116,8 @@ export function ParticleProperties({ emitterIndex, particle }: ParticlePropertie
     useEditorStore.getState().updateEmitter(emitterIndex, {
       particle: { ...particle, frameSequence: firstSequence },
     });
-  }, [emitterIndex, firstSequence, isAnimated, p.frameSequence, particle]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emitterIndex, firstSequence, isAnimated, p.frameSequence]);
 
   // ── Texture options for Sprite ──
 

@@ -201,10 +201,12 @@ export function PreviewCanvas() {
           return;
         }
 
-        // Expose for PixiJS DevTools and browser console debugging.
-        (globalThis as Record<string, unknown>).__PIXI_APP__ = app;
-        (globalThis as Record<string, unknown>).__PIXI_STAGE__ = app.stage;
-        (globalThis as Record<string, unknown>).__PIXI_RENDERER__ = app.renderer;
+        // Expose for PixiJS DevTools — dev only.
+        if (import.meta.env.DEV) {
+          (globalThis as Record<string, unknown>).__PIXI_APP__ = app;
+          (globalThis as Record<string, unknown>).__PIXI_STAGE__ = app.stage;
+          (globalThis as Record<string, unknown>).__PIXI_RENDERER__ = app.renderer;
+        }
 
         el.appendChild(app.canvas);
         appRef.current = app;
@@ -272,13 +274,18 @@ export function PreviewCanvas() {
           }
         });
       } catch (err) {
-        console.error('Failed to initialise PixiJS:', err);
+        if (import.meta.env.DEV) console.error('Failed to initialise PixiJS:', err);
         setError('Failed to initialise preview canvas');
       }
     })().catch(() => undefined);
 
     return () => {
       disposed = true;
+      if (import.meta.env.DEV) {
+        delete (globalThis as Record<string, unknown>).__PIXI_APP__;
+        delete (globalThis as Record<string, unknown>).__PIXI_STAGE__;
+        delete (globalThis as Record<string, unknown>).__PIXI_RENDERER__;
+      }
       if (appRef.current) {
         appRef.current.destroy(true);
         appRef.current = null;
@@ -368,8 +375,10 @@ export function PreviewCanvas() {
         if (cancelled) return;
 
         systemRef.current = system;
-        (globalThis as Record<string, unknown>).__SWIZZLE_SYSTEM__ = system;
-        (globalThis as Record<string, unknown>).__SWIZZLE_RENDERER__ = renderer;
+        if (import.meta.env.DEV) {
+          (globalThis as Record<string, unknown>).__SWIZZLE_SYSTEM__ = system;
+          (globalThis as Record<string, unknown>).__SWIZZLE_RENDERER__ = renderer;
+        }
 
         const shouldPlay = config.system.autoStart || previewStateRef.current === 'playing';
         if (shouldPlay) {
@@ -384,7 +393,7 @@ export function PreviewCanvas() {
       } catch (err: unknown) {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : 'Unknown error';
-        console.error('Failed to build particle system:', err);
+        if (import.meta.env.DEV) console.error('Failed to build particle system:', err);
         setError(`Failed to load system: ${msg}`);
         toast.error('Failed to create particle system');
       }

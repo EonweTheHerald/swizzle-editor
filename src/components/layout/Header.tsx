@@ -26,12 +26,18 @@ export function Header() {
   };
 
   const handleExport = () => {
-    const { config } = useEditorStore.getState();
-    const yaml = editorConfigToYAML(config);
-    const blob = new Blob([yaml], { type: 'text/yaml' });
-    downloadFile(blob, 'particle-effect.yaml');
-    useEditorStore.getState().markSaved();
-    toast.success('Configuration exported');
+    try {
+      const { config } = useEditorStore.getState();
+      const yaml = editorConfigToYAML(config);
+      const blob = new Blob([yaml], { type: 'text/yaml' });
+      downloadFile(blob, 'particle-effect.yaml');
+      useEditorStore.getState().markSaved();
+      toast.success('Configuration exported');
+    } catch (err) {
+      toast.error('Failed to export', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
   };
 
   const handleImport = () => {
@@ -81,6 +87,8 @@ export function Header() {
     <header
       className="flex items-center gap-1 px-2 bg-[var(--surface)] border-b border-[var(--border)] select-none"
       style={{ height: 'var(--header-height)' }}
+      role="toolbar"
+      aria-label="Editor toolbar"
     >
       {/* Left: Pane toggle + brand */}
       <div className="flex items-center gap-1 mr-2">

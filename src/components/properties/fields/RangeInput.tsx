@@ -3,7 +3,6 @@
  * Allows toggling between single value and range
  */
 
-import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -28,8 +27,9 @@ export function RangeInput({
   step = 0.1,
   description,
 }: RangeInputProps) {
-  const isRange = typeof value === 'object';
-  const [showRange, setShowRange] = useState(isRange);
+  // Derive showRange from the actual value type so it stays in sync with
+  // external state changes (e.g. undo toggling between range ↔ single).
+  const showRange = typeof value === 'object';
 
   const handleToggle = () => {
     if (showRange) {
@@ -41,7 +41,6 @@ export function RangeInput({
       const currentValue = typeof value === 'number' ? value : 0;
       onChange({ min: currentValue, max: currentValue * 1.5 });
     }
-    setShowRange(!showRange);
   };
 
   const handleSingleChange = (newValue: number) => {

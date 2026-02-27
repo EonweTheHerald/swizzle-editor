@@ -16,6 +16,19 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     sourcemap: mode !== 'production',
+    // PixiJS alone is ~529 KB minified — suppress the warning for expected large chunks.
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Isolate the heavy PixiJS + Swizzle runtime from app code.
+          'pixi': ['pixi.js'],
+          'swizzle': ['@eonwetheherald/swizzle'],
+          // Isolate vendor React + UI libs.
+          'vendor': ['react', 'react-dom', 'zustand', 'sonner'],
+        },
+      },
+    },
   },
   test: {
     globals: true,

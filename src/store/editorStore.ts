@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { EditorState, EditorConfig, AssetState, TextureAsset, SequenceAsset, LayoutState, HistoryEntry } from './types';
 import type { BehaviorConfig, EmitterConfig } from '@eonwetheherald/swizzle';
 import { recentreEmittersOnResize } from '@/utils/configTransform';
+import { debounce } from '@/lib/utils';
 
 const MAX_HISTORY = 100;
 const MIN_TIME_SCALE = 0.1;
@@ -66,8 +67,15 @@ class AssetDB {
   private dbName = 'swizzle-editor';
   private version = 1;
   private db: IDBDatabase | null = null;
+  private initPromise: Promise<void> | null = null;
 
-  async init(): Promise<void> {
+  private ensureDB(): Promise<void> {
+    if (this.db) return Promise.resolve();
+    if (!this.initPromise) this.initPromise = this.init();
+    return this.initPromise;
+  }
+
+  private async init(): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.version);
 
@@ -90,7 +98,7 @@ class AssetDB {
   }
 
   async saveTexture(texture: TextureAsset): Promise<void> {
-    if (!this.db) await this.init();
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['textures'], 'readwrite');
       const store = transaction.objectStore('textures');
@@ -101,7 +109,7 @@ class AssetDB {
   }
 
   async deleteTexture(id: string): Promise<void> {
-    if (!this.db) await this.init();
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['textures'], 'readwrite');
       const store = transaction.objectStore('textures');
@@ -112,7 +120,7 @@ class AssetDB {
   }
 
   async saveSequence(sequence: SequenceAsset): Promise<void> {
-    if (!this.db) await this.init();
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['sequences'], 'readwrite');
       const store = transaction.objectStore('sequences');
@@ -123,7 +131,7 @@ class AssetDB {
   }
 
   async deleteSequence(id: string): Promise<void> {
-    if (!this.db) await this.init();
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['sequences'], 'readwrite');
       const store = transaction.objectStore('sequences');
@@ -141,7 +149,21 @@ const LAYOUT_KEY = 'swizzle-editor-layout';
 function loadPersistedLayout(): LayoutState {
   try {
     const raw = localStorage.getItem(LAYOUT_KEY);
-    if (raw) return { ...createDefaultLayout(), ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const defaults = createDefaultLayout();
+      // Validate that numeric fields are actually numbers.
+      const merge = { ...defaults, ...parsed };
+      for (const key of Object.keys(defaults) as Array<keyof LayoutState>) {
+        if (typeof defaults[key] === 'number' && typeof merge[key] !== 'number') {
+          merge[key] = defaults[key];
+        }
+        if (typeof defaults[key] === 'boolean' && typeof merge[key] !== 'boolean') {
+          merge[key] = defaults[key];
+        }
+      }
+      return merge;
+    }
   } catch { /* ignored */ }
   return createDefaultLayout();
 }
@@ -150,6 +172,8 @@ function persistLayout(layout: LayoutState) {
     localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout));
   } catch { /* ignored */ }
 }
+
+const debouncedPersistLayout = debounce(persistLayout, 300);
 
 /**
  * Create a history snapshot
@@ -201,10 +225,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (historyIndex === history.length - 1) {
       const snapshot = createSnapshot(get());
       snapshot.label = 'current';
-      history.push(snapshot);
+      // Clone to avoid mutating live state
+      const updatedHistory = [...history, snapshot];
+      set({ history: updatedHistory });
     }
 
-    const entry = history[historyIndex];
+    const entry = get().history[historyIndex];
     set((state) => ({
       config: structuredClone(entry.config),
       ui: {
@@ -247,14 +273,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       config: createDefaultConfig(),
       assets: createDefaultAssetState(),
       ui: createDefaultUIState(),
+      history: [],
+      historyIndex: -1,
     });
   },
 
   setMaxParticles: (max: number) => {
+    const clamped = Math.min(10000, Math.max(1, Math.round(Number.isFinite(max) ? max : 1000)));
     set((state) => ({
       config: {
         ...state.config,
-        system: { ...state.config.system, maxParticles: max },
+        system: { ...state.config.system, maxParticles: clamped },
       },
       ui: { ...state.ui, hasUnsavedChanges: true },
     }));
@@ -288,6 +317,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   updateEmitter: (index: number, updates: Partial<EmitterConfig>) => {
     set((state) => {
       const emitters = [...state.config.emitters];
+      if (index < 0 || index >= emitters.length) return state;
       emitters[index] = { ...emitters[index], ...updates };
       return {
         config: { ...state.config, emitters },
@@ -309,11 +339,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           ? selectedIndex - 1
           : selectedIndex;
 
+      // Adjust hidden indices after removal
+      const newHiddenIndices = new Set<number>();
+      state.ui.hiddenEmitterIndices.forEach((oldIndex) => {
+        if (oldIndex === index) return; // Removed — drop it
+        if (oldIndex > index) {
+          newHiddenIndices.add(oldIndex - 1);
+        } else {
+          newHiddenIndices.add(oldIndex);
+        }
+      });
+
       return {
         config: { ...state.config, emitters },
         ui: {
           ...state.ui,
           selectedEmitterIndex: newSelectedIndex,
+          hiddenEmitterIndices: newHiddenIndices,
           hasUnsavedChanges: true,
         },
       };
@@ -466,51 +508,71 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   // Asset actions
   addTexture: async (texture: TextureAsset) => {
-    await assetDB.saveTexture(texture);
-    set((state) => {
-      const textures = new Map(state.assets.textures);
-      textures.set(texture.id, texture);
-      return {
-        assets: { ...state.assets, textures },
-        ui: { ...state.ui, hasUnsavedChanges: true },
-      };
-    });
+    try {
+      await assetDB.saveTexture(texture);
+      set((state) => {
+        const textures = new Map(state.assets.textures);
+        textures.set(texture.id, texture);
+        return {
+          assets: { ...state.assets, textures },
+          ui: { ...state.ui, hasUnsavedChanges: true },
+        };
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      throw new Error(`Failed to save texture: ${msg}`);
+    }
   },
 
   removeTexture: async (id: string) => {
-    await assetDB.deleteTexture(id);
-    set((state) => {
-      const textures = new Map(state.assets.textures);
-      textures.delete(id);
-      return {
-        assets: { ...state.assets, textures },
-        ui: { ...state.ui, hasUnsavedChanges: true },
-      };
-    });
+    try {
+      await assetDB.deleteTexture(id);
+      set((state) => {
+        const textures = new Map(state.assets.textures);
+        textures.delete(id);
+        return {
+          assets: { ...state.assets, textures },
+          ui: { ...state.ui, hasUnsavedChanges: true },
+        };
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      throw new Error(`Failed to delete texture: ${msg}`);
+    }
   },
 
   addSequence: async (sequence: SequenceAsset) => {
-    await assetDB.saveSequence(sequence);
-    set((state) => {
-      const sequences = new Map(state.assets.sequences);
-      sequences.set(sequence.id, sequence);
-      return {
-        assets: { ...state.assets, sequences },
-        ui: { ...state.ui, hasUnsavedChanges: true },
-      };
-    });
+    try {
+      await assetDB.saveSequence(sequence);
+      set((state) => {
+        const sequences = new Map(state.assets.sequences);
+        sequences.set(sequence.id, sequence);
+        return {
+          assets: { ...state.assets, sequences },
+          ui: { ...state.ui, hasUnsavedChanges: true },
+        };
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      throw new Error(`Failed to save sequence: ${msg}`);
+    }
   },
 
   removeSequence: async (id: string) => {
-    await assetDB.deleteSequence(id);
-    set((state) => {
-      const sequences = new Map(state.assets.sequences);
-      sequences.delete(id);
-      return {
-        assets: { ...state.assets, sequences },
-        ui: { ...state.ui, hasUnsavedChanges: true },
-      };
-    });
+    try {
+      await assetDB.deleteSequence(id);
+      set((state) => {
+        const sequences = new Map(state.assets.sequences);
+        sequences.delete(id);
+        return {
+          assets: { ...state.assets, sequences },
+          ui: { ...state.ui, hasUnsavedChanges: true },
+        };
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      throw new Error(`Failed to delete sequence: ${msg}`);
+    }
   },
 
   // Selection actions
@@ -601,7 +663,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setLeftPaneWidth: (width: number) => {
     set((state) => {
       const layout = { ...state.layout, leftPaneWidth: Math.max(PANE_MIN_WIDTH, width), leftPaneLastWidth: Math.max(PANE_MIN_WIDTH, width) };
-      persistLayout(layout);
+      debouncedPersistLayout(layout);
       return { layout };
     });
   },
@@ -609,7 +671,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setRightPaneWidth: (width: number) => {
     set((state) => {
       const layout = { ...state.layout, rightPaneWidth: Math.max(PANE_MIN_WIDTH, width), rightPaneLastWidth: Math.max(PANE_MIN_WIDTH, width) };
-      persistLayout(layout);
+      debouncedPersistLayout(layout);
       return { layout };
     });
   },

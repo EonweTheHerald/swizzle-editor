@@ -62,6 +62,9 @@ export function useResizable({
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      // Always reset body styles on cleanup (handles unmount-during-drag).
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
   }, [direction, minWidth, maxWidth, onResize]);
 

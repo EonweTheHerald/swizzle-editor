@@ -24,8 +24,8 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // Delete - Remove selected layer
-      if (e.key === 'Delete' && selectedEmitterIndex !== null) {
+      // Delete / Backspace - Remove selected layer
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedEmitterIndex !== null) {
         e.preventDefault();
         removeEmitter(selectedEmitterIndex);
         toast.success('Layer deleted');
@@ -78,12 +78,18 @@ export function useKeyboardShortcuts() {
       // Ctrl+S - Export YAML
       if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        const { config } = useEditorStore.getState();
-        const yaml = editorConfigToYAML(config);
-        const blob = new Blob([yaml], { type: 'text/yaml' });
-        downloadFile(blob, 'particle-effect.yaml');
-        useEditorStore.getState().markSaved();
-        toast.success('Configuration exported');
+        try {
+          const { config } = useEditorStore.getState();
+          const yaml = editorConfigToYAML(config);
+          const blob = new Blob([yaml], { type: 'text/yaml' });
+          downloadFile(blob, 'particle-effect.yaml');
+          useEditorStore.getState().markSaved();
+          toast.success('Configuration exported');
+        } catch (err) {
+          toast.error('Failed to export', {
+            description: err instanceof Error ? err.message : 'Unknown error',
+          });
+        }
       }
     };
 

@@ -1,12 +1,15 @@
 import { PreviewCanvas } from '../preview/PreviewCanvas';
 import { PlaybackControls } from '../preview/PlaybackControls';
+import { ErrorBoundary } from '../ErrorBoundary';
 
 export function CenterPanel() {
   return (
     <div className="flex-1 flex flex-col bg-[var(--bg)] relative min-w-0">
       {/* Preview canvas */}
       <div className="flex-1 relative p-2">
-        <PreviewCanvas />
+        <ErrorBoundary label="PreviewCanvas">
+          <PreviewCanvas />
+        </ErrorBoundary>
       </div>
 
       {/* Bottom controls */}

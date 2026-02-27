@@ -6,9 +6,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Generate a unique ID
+ * Generate a unique ID using crypto.randomUUID when available.
  */
 export function generateId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
@@ -16,17 +19,18 @@ export function generateId(): string {
  * Format file size to human-readable string
  */
 export function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return '0 Bytes';
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
   return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`;
 }
 
 /**
  * Debounce function
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) & { cancel: () => void } {
@@ -54,14 +58,18 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  * Convert hex color to number
  */
 export function hexToNumber(hex: string): number {
-  return parseInt(hex.replace('#', ''), 16);
+  const cleaned = hex.replace(/^#/, '');
+  const parsed = parseInt(cleaned, 16);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.min(0xffffff, Math.max(0, parsed));
 }
 
 /**
  * Convert number to hex color
  */
 export function numberToHex(num: number): string {
-  return `#${num.toString(16).padStart(6, '0')}`;
+  const clamped = Math.min(0xffffff, Math.max(0, Math.round(num)));
+  return `#${clamped.toString(16).padStart(6, '0')}`;
 }
 
 /**

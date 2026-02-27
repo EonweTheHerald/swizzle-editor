@@ -95,9 +95,11 @@ export function BehaviorList({ emitterIndex }: BehaviorListProps) {
               }`}
             >
               {/* Behavior Header */}
-              <div
-                className="flex items-center gap-2 p-3 cursor-pointer"
+              <button
+                type="button"
+                className="flex items-center gap-2 p-3 cursor-pointer w-full text-left bg-transparent border-0"
                 onClick={() => setEditingIndex(editingIndex === index ? null : index)}
+                aria-expanded={editingIndex === index}
               >
                 <GripVertical className="h-4 w-4 text-[var(--text-muted)] flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -122,7 +124,7 @@ export function BehaviorList({ emitterIndex }: BehaviorListProps) {
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
-              </div>
+              </button>
 
               {/* Behavior Form (when editing) */}
               {editingIndex === index && (

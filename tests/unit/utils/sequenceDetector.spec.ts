@@ -145,7 +145,8 @@ describe('sequenceDetector', () => {
 
       const result = validateSequence(sequence);
 
-      expect(result.valid).toBe(false);
+      // Gaps produce warnings but the sequence is still valid (usable).
+      expect(result.valid).toBe(true);
       expect(result.warnings.length).toBeGreaterThan(0);
       expect(result.warnings[0]).toContain('Missing frames');
     });

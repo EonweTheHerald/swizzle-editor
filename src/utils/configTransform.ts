@@ -69,7 +69,13 @@ export function editorConfigToYAML(config: EditorConfig): string {
  * Parse YAML string back to editor config
  */
 export function yamlToEditorConfig(yaml: string): EditorConfig {
-  const parsed = toParsedYamlConfig(load(yaml));
+  let parsed: ParsedYamlConfig;
+  try {
+    parsed = toParsedYamlConfig(load(yaml));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown YAML parse error';
+    throw new Error(`Failed to parse YAML: ${msg}`);
+  }
   // All field names are canonical (vertices, path) — no translation needed on import.
   const emitters = Array.isArray(parsed.emitters)
     ? parsed.emitters.filter(isEmitterConfig)

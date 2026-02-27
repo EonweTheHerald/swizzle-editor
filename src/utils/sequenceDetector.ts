@@ -30,15 +30,16 @@ function extractFrameInfo(filename: string): {
   extension: string;
 } | null {
   // Match patterns like: name_000.png, name_00.png, name0.png, etc.
-  const match = filename.match(/^(.+?)_?(\d+)\.([^.]+)$/);
+  // Use a greedy match for the base, then an optional _ separator, then digits.
+  const match = filename.match(/^(.+?)(_?)(\d+)\.([^.]+)$/);
   if (!match) return null;
 
-  const [, base, numberStr, extension] = match;
+  const [, base, separator, numberStr, extension] = match;
   const number = parseInt(numberStr, 10);
   const padding = numberStr.length;
 
   return {
-    base: base + (filename.includes('_') ? '_' : ''),
+    base: base + separator,
     number,
     padding,
     extension,
@@ -158,12 +159,16 @@ export function autoDetectSequences(files: File[]): {
 } {
   const sequences: SequenceInfo[] = [];
   const processedFiles = new Set<File>();
+  let remaining = [...files];
 
-  // Try to detect sequences
-  const sequence = detectSequence(files);
-  if (sequence) {
+  // Iteratively detect sequences until no more are found.
+  while (remaining.length >= 2) {
+    const sequence = detectSequence(remaining);
+    if (!sequence) break;
+
     sequences.push(sequence);
     sequence.files.forEach((file) => processedFiles.add(file));
+    remaining = remaining.filter((file) => !processedFiles.has(file));
   }
 
   // Remaining files are individuals
@@ -173,13 +178,17 @@ export function autoDetectSequences(files: File[]): {
 }
 
 /**
- * Validate sequence integrity
+ * Validate sequence integrity.
+ *
+ * `valid` is false only for genuinely broken sequences (< 2 frames).
+ * Gaps and missing frames produce warnings but keep `valid: true`.
  */
 export function validateSequence(sequence: SequenceInfo): {
   valid: boolean;
   warnings: string[];
 } {
   const warnings: string[] = [];
+  let valid = true;
 
   // Check for gaps
   if (sequence.gaps.length > 0) {
@@ -197,13 +206,11 @@ export function validateSequence(sequence: SequenceInfo): {
     );
   }
 
-  // Check minimum frame count
+  // Check minimum frame count — this is a real error
   if (actualFrames < 2) {
     warnings.push('Sequence has less than 2 frames');
+    valid = false;
   }
 
-  return {
-    valid: warnings.length === 0,
-    warnings,
-  };
+  return { valid, warnings };
 }
