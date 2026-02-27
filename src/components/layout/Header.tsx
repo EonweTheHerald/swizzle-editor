@@ -4,7 +4,7 @@ import { useEditorStore } from '@/store/editorStore';
 import {
   Download, Upload, FilePlus, Play, Pause, Square,
   Undo2, Redo2, PanelLeftClose, PanelRightClose,
-  RotateCcw,
+  RotateCcw, Github,
 } from 'lucide-react';
 import { editorConfigToYAML, yamlToEditorConfig } from '@/utils/configTransform';
 import { downloadFile } from '@/lib/utils';
@@ -189,6 +189,19 @@ export function Header() {
           {previewState === 'playing' ? 'PLAYING' : previewState === 'paused' ? 'PAUSED' : 'STOPPED'}
         </span>
       </div>
+
+      <Separator orientation="vertical" className="h-5 mx-1" />
+
+      {/* GitHub link */}
+      <a
+        href="https://github.com/EonweTheHerald/swizzle"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="View on GitHub"
+        className="inline-flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition-colors"
+      >
+        <Github size={14} />
+      </a>
 
       <Separator orientation="vertical" className="h-5 mx-1" />
 
