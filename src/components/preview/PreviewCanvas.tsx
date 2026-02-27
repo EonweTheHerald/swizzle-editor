@@ -249,7 +249,7 @@ export function PreviewCanvas() {
             const memoryMb = typeof usedHeap === 'number' ? usedHeap / (1024 * 1024) : null;
 
             setMetrics({
-              activeEmitters: sys?.emitters.filter((emitter) => emitter.active).length ?? 0,
+              activeEmitters: sys?.emitters.filter((emitter: { active: boolean }) => emitter.active).length ?? 0,
               totalParticles: sys?.particles.length ?? 0,
               fps: sampledFps,
               memoryMb,

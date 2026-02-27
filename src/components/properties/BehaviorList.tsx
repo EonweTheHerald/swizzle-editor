@@ -85,7 +85,7 @@ export function BehaviorList({ emitterIndex }: BehaviorListProps) {
         </div>
       ) : (
         <div className="space-y-2">
-          {behaviors.map((behavior, index) => (
+          {behaviors.map((behavior: BehaviorConfig, index: number) => (
             <div
               key={index}
               className={`border rounded transition-colors ${

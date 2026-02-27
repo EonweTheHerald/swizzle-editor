@@ -490,7 +490,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
       const emitter = { ...currentEmitter };
       const behaviors = (emitter.particle.behaviors || []).filter(
-        (_, i) => i !== behaviorIndex
+        (_: BehaviorConfig, i: number) => i !== behaviorIndex
       );
       emitter.particle = { ...emitter.particle, behaviors };
       emitters[emitterIndex] = emitter;
